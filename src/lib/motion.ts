@@ -112,3 +112,13 @@ export function lockScroll(locked: boolean) {
   document.documentElement.classList.toggle("is-locked", locked);
   ScrollSmoother.get()?.paused(locked);
 }
+
+/**
+ * Moves the page to an absolute position. ScrollSmoother owns the scroll, so a
+ * bare `window.scrollTo` is silently undone the moment it resumes.
+ */
+export function scrollTo(y: number) {
+  const smoother = ScrollSmoother.get();
+  if (smoother) smoother.scrollTo(y, true);
+  else window.scrollTo(0, y);
+}
