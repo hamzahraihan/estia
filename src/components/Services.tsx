@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ease, motion, useGsap } from "../lib/motion";
 import { services } from "../data/studio";
@@ -39,37 +39,24 @@ export default function Services() {
     });
   }, []);
 
-  useGsap((mm) => {
+  /**
+   * The panels are handed from one toggle to the next exactly as the last one
+   * left them. Reverting them instead would strip the inline height holding
+   * the closed panels shut, and the browser would flash every panel open for a
+   * frame before the new timeline measured them at full size and closed them
+   * again — so this runs outside `useGsap`, which reverts on every change.
+   */
+  const accordion = useRef<gsap.core.Timeline | null>(null);
+
+  useLayoutEffect(() => {
     const el = root.current;
     if (!el) return;
     const panels = el.querySelectorAll<HTMLElement>(".service-panel");
     const frames = el.querySelectorAll<HTMLElement>(".service-shot");
 
-    mm.add(motion.full, () => {
-      const tl = gsap.timeline();
-      panels.forEach((panel, i) => {
-        if (i === open) {
-          tl.fromTo(
-            panel,
-            { height: 0, autoAlpha: 0 },
-            { height: "auto", autoAlpha: 1, duration: 0.85, ease: ease.io },
-            0,
-          );
-        } else {
-          tl.to(panel, { height: 0, autoAlpha: 0, duration: 0.55, ease: ease.io }, 0);
-        }
-      });
-      tl.to(frames, { autoAlpha: 0, scale: 1.06, duration: 0.4, ease: ease.io }, 0)
-        .fromTo(
-          frames[open],
-          { autoAlpha: 0, scale: 1.12 },
-          { autoAlpha: 1, scale: 1, duration: 0.95, ease: ease.out },
-          0.2,
-        );
-      return () => tl.kill();
-    });
+    accordion.current?.kill();
 
-    mm.add(motion.reduce, () => {
+    if (window.matchMedia(motion.reduce).matches) {
       panels.forEach((panel, i) => {
         panel.style.height = i === open ? "auto" : "0px";
         panel.style.opacity = i === open ? "1" : "0";
@@ -77,7 +64,37 @@ export default function Services() {
       frames.forEach((frame, i) => {
         frame.style.opacity = i === open ? "1" : "0";
       });
+      return;
+    }
+
+    const tl = gsap.timeline();
+    accordion.current = tl;
+
+    panels.forEach((panel, i) => {
+      if (i === open) {
+        tl.fromTo(
+          panel,
+          { height: 0, autoAlpha: 0 },
+          { height: "auto", autoAlpha: 1, duration: 0.85, ease: ease.io },
+          0,
+        );
+      } else if (panel.style.height !== "0px") {
+        // Closed panels are already shut; tweening them would only have GSAP
+        // re-measure a height they no longer have.
+        tl.to(panel, { height: 0, autoAlpha: 0, duration: 0.55, ease: ease.io }, 0);
+      }
     });
+
+    tl.to(frames, { autoAlpha: 0, scale: 1.06, duration: 0.4, ease: ease.io }, 0).fromTo(
+      frames[open],
+      { autoAlpha: 0, scale: 1.12 },
+      { autoAlpha: 1, scale: 1, duration: 0.95, ease: ease.out },
+      0.2,
+    );
+
+    return () => {
+      tl.kill();
+    };
   }, [open]);
 
   return (
