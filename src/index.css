@@ -172,9 +172,10 @@
 
   .cursor {
     position: fixed;
-    top: 0;
+    /* Must clear the project overlay (z-100) and the preloader, or the custom
+       cursor is painted underneath the work it is meant to sit on top of. */
+    z-index: 110;
     left: 0;
-    z-index: 95;
     pointer-events: none;
     color: #fff;
     mix-blend-mode: difference;
@@ -321,6 +322,15 @@
     width: 20%;
     background-color: var(--color-char);
     will-change: transform;
+  }
+
+  /* The hero unrolls between a card's rectangle and the full viewport, which
+     is a non-uniform scale on a 2000px image on every frame of the gesture.
+     Owning the layer keeps that a composite instead of a re-rasterise. */
+  .ov-media,
+  .ov-media > img {
+    will-change: transform;
+    backface-visibility: hidden;
   }
 
   /* ── Scrollbar ─────────────────────────────────────────────────── */
