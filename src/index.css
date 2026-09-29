@@ -1,0 +1,382 @@
+@import "tailwindcss";
+
+@theme {
+  /* Surfaces */
+  --color-bone: #efeae1;
+  --color-bone-2: #e5ded1;
+  --color-linen: #f7f4ed;
+  --color-ink: #16130f;
+  --color-ink-2: #4c443a;
+  --color-ink-3: #8d8377;
+  --color-clay: #a2643c;
+  --color-char: #14110d;
+
+  /* Type */
+  --font-display: "Instrument Serif", "Iowan Old Style", "Times New Roman", serif;
+  --font-sans: "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  --text-display: clamp(4rem, 17vw, 19rem);
+  --text-hero: clamp(2.75rem, 9.5vw, 11rem);
+  --text-title: clamp(2.1rem, 5.6vw, 5.75rem);
+  --text-lead: clamp(1.15rem, 1.85vw, 1.7rem);
+  --text-body: clamp(0.95rem, 1.02vw, 1.0625rem);
+  --text-meta: 0.6875rem;
+
+  /* Motion */
+  --ease-cine: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-swift: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --shell-pad: clamp(1.15rem, 4vw, 4.5rem);
+  /* Horizontal work gallery: card width follows the viewport height so the
+     pinned row always fits one screen on any device. */
+  --card-w: calc(clamp(12rem, 52vh, 28rem) * 0.75);
+  --header-h: 4.5rem;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    min-width: 0;
+  }
+
+  html {
+    background-color: var(--color-bone);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  html.is-locked {
+    overflow: hidden;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.5;
+    font-weight: 400;
+    color: var(--color-ink);
+    background-color: var(--color-bone);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  figure,
+  blockquote,
+  ul,
+  ol {
+    margin: 0;
+  }
+
+  ul,
+  ol {
+    padding: 0;
+    list-style: none;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: var(--color-ink);
+    color: var(--color-bone);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-clay);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  /* ── Layout primitives ─────────────────────────────────────────── */
+  .shell {
+    padding-inline: var(--shell-pad);
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+    font-size: var(--text-meta);
+    line-height: 1;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: 0.88;
+    letter-spacing: -0.015em;
+  }
+
+  .rule {
+    background-color: color-mix(in oklab, var(--color-ink) 14%, transparent);
+  }
+
+  /* ── Chrome ────────────────────────────────────────────────────── */
+  .grain {
+    position: fixed;
+    inset: -50%;
+    z-index: 90;
+    pointer-events: none;
+    opacity: 0.34;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: grain-shift 700ms steps(1) infinite;
+    will-change: transform;
+  }
+
+  @keyframes grain-shift {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    20% {
+      transform: translate3d(-4%, 3%, 0);
+    }
+    40% {
+      transform: translate3d(3%, -4%, 0);
+    }
+    60% {
+      transform: translate3d(-3%, -2%, 0);
+    }
+    80% {
+      transform: translate3d(4%, 2%, 0);
+    }
+    100% {
+      transform: translate3d(-2%, 4%, 0);
+    }
+  }
+
+  .cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 95;
+    pointer-events: none;
+    color: #fff;
+    mix-blend-mode: difference;
+  }
+
+  .cursor__ring {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin: -1.375rem 0 0 -1.375rem;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+  }
+
+  .cursor__dot {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 5px;
+    margin: -2.5px 0 0 -2.5px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  .cursor__label {
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0;
+  }
+
+  @media (pointer: coarse) {
+    .cursor {
+      display: none;
+    }
+  }
+
+  /* ── Split text plumbing (GSAP SplitText `mask`) ───────────────── */
+  .split-mask {
+    display: block;
+    overflow: hidden;
+  }
+
+  /* ── Media reveal ──────────────────────────────────────────────── */
+  .reveal-frame {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-bone-2);
+  }
+
+  .reveal-frame > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    will-change: transform;
+  }
+
+  @media (pointer: fine) {
+    .has-custom-cursor,
+    .has-custom-cursor * {
+      cursor: none;
+    }
+  }
+
+  /* ── Marquee ───────────────────────────────────────────────────── */
+  .marquee {
+    display: flex;
+    width: max-content;
+    will-change: transform;
+  }
+
+  /* ── Buttons ───────────────────────────────────────────────────── */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: 1px solid color-mix(in oklab, currentColor 26%, transparent);
+    border-radius: 999px;
+    padding: 0.7rem 1.35rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-meta);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    transition:
+      background-color 0.5s var(--ease-cine),
+      color 0.5s var(--ease-cine),
+      border-color 0.5s var(--ease-cine);
+  }
+
+  .pill:hover {
+    background-color: currentColor;
+    color: var(--color-bone);
+    border-color: currentColor;
+  }
+
+  .pill__dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: currentColor;
+    transition: transform 0.5s var(--ease-cine);
+  }
+
+  .pill:hover .pill__dot {
+    transform: scale(2.2);
+  }
+
+  /* ── Underline link ────────────────────────────────────────────── */
+  .link-line {
+    position: relative;
+    display: inline-block;
+  }
+
+  .link-line::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -0.15em;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.6s var(--ease-cine);
+  }
+
+  .link-line:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  /* ── Project overlay curtain ───────────────────────────────────── */
+  .curtain {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 20%;
+    background-color: var(--color-char);
+    will-change: transform;
+  }
+
+  /* ── Scrollbar ─────────────────────────────────────────────────── */
+  ::-webkit-scrollbar {
+    width: 9px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-bone-2);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--color-ink) 32%, transparent);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklab, var(--color-ink) 55%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grain {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Reduced motion: unwrap the layouts that exist for their animation ── */
+/* Deliberately unlayered: Tailwind's utilities layer outranks
+   @layer components, and these overrides have to win. */
+html[data-motion="reduce"] #work {
+  height: auto;
+  padding-block: clamp(4rem, 10vh, 7rem);
+}
+
+html[data-motion="reduce"] .work-track {
+  width: auto;
+  height: auto;
+  flex-wrap: wrap;
+  row-gap: 2.5rem;
+}
+
+html[data-motion="reduce"] .work-card {
+  width: min(100%, 22rem);
+}
+
+html[data-motion="reduce"] .work-media {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+}
+
+html[data-motion="reduce"] .marquee {
+  width: auto;
+  flex-wrap: wrap;
+  row-gap: 0.5rem;
+}
