@@ -177,3 +177,16 @@ export const image = (key: ShotKey, width: number): string => {
   const { id, ratio } = shots[key];
   return `${CDN}${id}?auto=format&fit=crop&crop=entropy&w=${width}&h=${Math.round(width / ratio)}&q=72`;
 };
+
+/** The overlay's full-bleed hero — the largest image slot on the site. */
+export const HERO_WIDTH = 2000;
+
+/**
+ * Warms a project's hero ahead of the click. The overlay asks for a wider
+ * crop than the work cards do, so without this the open transition is
+ * animating a photo that is still downloading and decoding.
+ */
+export function preload(key: ShotKey) {
+  const img = new Image();
+  img.src = image(key, HERO_WIDTH);
+}
