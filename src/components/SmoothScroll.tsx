@@ -36,7 +36,12 @@ export default function SmoothScroll({ paused, children }: Props) {
       if (key === last) return;
       last = key;
       window.clearTimeout(timer);
-      timer = window.setTimeout(() => ScrollTrigger.refresh(), 180);
+      timer = window.setTimeout(() => {
+        // A page change refreshes on its own schedule. Refreshing again here
+        // would land just after it and re-clamp the scroll position it has
+        // only just put back where the visitor left it.
+        if (!document.documentElement.classList.contains("is-locked")) ScrollTrigger.refresh();
+      }, 180);
     });
     if (node) observer.observe(node);
 
