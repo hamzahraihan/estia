@@ -1,18 +1,16 @@
 import { useRef } from "react";
 import gsap from "gsap";
 import { motion, useGsap } from "../lib/motion";
-import { image, shots } from "../data/media";
+import { image, preload, shots } from "../data/media";
 import { projects } from "../data/projects";
-import type { Project } from "../data/projects";
+import { cardBox } from "../lib/frame";
+import { useRouteTransition } from "../lib/routeTransition";
 
-type Props = {
-  onOpen: (project: Project, source: HTMLElement | null) => void;
-};
-
-export default function Projects({ onOpen }: Props) {
+export default function Projects() {
   const root = useRef<HTMLElement>(null);
   const counter = useRef<HTMLSpanElement>(null);
   const progress = useRef<HTMLDivElement>(null);
+  const { go } = useRouteTransition();
 
   useGsap((mm) => {
     mm.add(motion.full, () => {
@@ -105,8 +103,12 @@ export default function Projects({ onOpen }: Props) {
               key={project.slug}
               type="button"
               data-cursor="View"
+              onPointerEnter={() => preload(project.cover)}
+              onFocus={() => preload(project.cover)}
               onClick={(e) =>
-                onOpen(project, e.currentTarget.querySelector<HTMLElement>(".work-media"))
+                go(`/work/${project.slug}`, {
+                  box: cardBox(e.currentTarget.querySelector(".work-media")!),
+                })
               }
               className="work-card group flex h-full w-[length:var(--card-w)] shrink-0 flex-col justify-center text-left"
             >
