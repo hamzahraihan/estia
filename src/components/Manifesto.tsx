@@ -11,20 +11,25 @@ export default function Manifesto() {
       const el = root.current;
       if (!el) return;
 
-      const statement = splitWords(el.querySelector(".statement")!);
-      gsap.set(statement.words, { opacity: 0.14, yPercent: 24 });
+      const statements = gsap.utils.toArray<HTMLElement>(".statement", el).map((node) => {
+        const statement = splitWords(node);
+        gsap.set(statement.words, { opacity: 0.14, yPercent: 24 });
 
-      const scrub = gsap.to(statement.words, {
-        opacity: 1,
-        yPercent: 0,
-        ease: "none",
-        stagger: 0.35,
-        scrollTrigger: {
-          trigger: ".statement",
-          start: "top 78%",
-          end: "bottom 62%",
-          scrub: 0.8,
-        },
+        return {
+          statement,
+          tween: gsap.to(statement.words, {
+            opacity: 1,
+            yPercent: 0,
+            ease: "none",
+            stagger: 0.35,
+            scrollTrigger: {
+              trigger: node,
+              start: "top 78%",
+              end: "bottom 62%",
+              scrub: 0.8,
+            },
+          }),
+        };
       });
 
       const rise = gsap.utils.toArray<HTMLElement>("[data-card]", el).map((node) =>
@@ -38,9 +43,11 @@ export default function Manifesto() {
       );
 
       return () => {
-        scrub.scrollTrigger?.kill();
-        scrub.kill();
-        statement.revert();
+        statements.forEach(({ statement, tween }) => {
+          tween.scrollTrigger?.kill();
+          tween.kill();
+          statement.revert();
+        });
         rise.forEach((t) => t.kill());
       };
     });
