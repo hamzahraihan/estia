@@ -15,9 +15,6 @@ export type Project = {
   gallery: { key: ShotKey; caption: string }[];
 };
 
-/** A project plus the thumbnail the overlay's image grows out of, if any. */
-export type ProjectEntry = { project: Project; source: HTMLElement | null };
-
 export const projects: Project[] = [
   {
     slug: "casa-verdant",
