@@ -1,25 +1,39 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useLocation } from "react-router";
 import { ease, lockScroll, motion, useGsap } from "../lib/motion";
 import { navLinks, studio } from "../data/studio";
+import { SCROLL_SETTLED } from "../lib/scrollMemory";
 
 type Props = {
   /** False while the preloader still owns the viewport. */
   ready: boolean;
-  /** A project overlay is open — the header steps out of the way. */
-  overlayOpen: boolean;
 };
 
-export default function Nav({ ready, overlayOpen }: Props) {
+export default function Nav({ ready }: Props) {
   const root = useRef<HTMLElement>(null);
-  const [open, setOpen] = useState(false);
+  // The whole header leaves together — bar and links as one piece. Parking
+  // only the links and leaving the frosted bar behind reads as a broken
+  // half-state rather than as a header getting out of the way.
+  const away = useRef(true);
+  // Held on refs rather than in the effect, so the settle listener below can
+  // re-read them without having to be inside the animation context.
+  const last = useRef(0);
+  const acc = useRef(0);
+  // The menu belongs to the route it was opened on. Deriving it that way means
+  // a page change puts it away by itself, instead of relying on an effect to
+  // remember to close it — and a menu can never outlive its own navigation.
+  const [openAt, setOpenAt] = useState<string | null>(null);
+  const { pathname } = useLocation();
+  const open = openAt === pathname;
 
   // Without motion the header is simply always on — nothing in this component
   // may leave the page without a way to navigate.
   useGsap((mm) => {
     mm.add(motion.reduce, () => {
       gsap.set(root.current, { yPercent: 0, autoAlpha: 1 });
+      away.current = false;
     });
   }, []);
 
@@ -28,23 +42,84 @@ export default function Nav({ ready, overlayOpen }: Props) {
   useGsap((mm) => {
     mm.add(motion.full, () => {
       const el = root.current;
-      if (!el) return;
+      const scrim = el?.querySelector<HTMLElement>(".nav-bg");
+      if (!el || !scrim) return;
 
       gsap.set(el, { yPercent: -130, autoAlpha: 0 });
+
+      // A wheel emits dozens of scroll events a second. Starting a fresh tween
+      // on each one leaves several of them fighting over the same transform,
+      // which is what makes a header judder on its way out — so the target
+      // only changes when the visitor's direction actually changes, and the
+      // tween that does run takes the property over from any predecessor.
+      const slide = (hide: boolean) => {
+        away.current = hide;
+        gsap.to(el, {
+          yPercent: hide ? -130 : 0,
+          autoAlpha: hide ? 0 : 1,
+          duration: hide ? 0.45 : 0.55,
+          ease: ease.out,
+          overwrite: "auto",
+        });
+      };
+
+      let scrimmed = false;
+
       const trigger = ScrollTrigger.create({
         start: "top -80",
         end: 99999,
+        // A refresh re-measures scroll, so the running total has to start over
+        // from the new position or the next update reads it as a huge flick.
+        onRefresh: (self) => {
+          last.current = self.scroll();
+        },
         onUpdate: (self) => {
-          if (self.scroll() < 120 || self.direction === -1) {
-            gsap.to(el, { yPercent: 0, autoAlpha: 1, duration: 0.55, ease: ease.out });
-          } else {
-            gsap.to(el, { yPercent: -130, autoAlpha: 0, duration: 0.45, ease: ease.out });
+          const y = self.scroll();
+          acc.current += y - last.current;
+          last.current = y;
+
+          // A trackpad's rebound and a wheel's detents are a few pixels each.
+          // Reacting to those strobes the header in and out mid-read, and the
+          // small nudges never even add up to a return — so commit to a
+          // direction only once the movement is unmistakably one way.
+          if (Math.abs(acc.current) > 8) {
+            const next = acc.current > 0 && y > 120;
+            acc.current = 0;
+            if (next !== away.current) slide(next);
           }
-          gsap.to(".nav-bg", { opacity: self.scroll() > 40 ? 1 : 0, duration: 0.45 });
+
+          const lit = y > 40;
+          if (lit !== scrimmed) {
+            scrimmed = lit;
+            gsap.to(scrim, { opacity: lit ? 1 : 0, duration: 0.45, overwrite: "auto" });
+          }
         },
       });
       return () => trigger.kill();
     });
+  }, []);
+
+  // A page change puts the visitor back where they were, and that movement is
+  // the site repositioning itself, not them reading downwards. Left alone it
+  // reads as one enormous downward scroll and the header hides itself on
+  // arrival — leaving a page whose navigation is gone with no way to scroll it
+  // back. Re-read the position instead, and meet them with the header showing.
+  useEffect(() => {
+    const onSettled = () => {
+      last.current = window.scrollY;
+      acc.current = 0;
+      if (!root.current) return;
+      away.current = false;
+      gsap.to(root.current, {
+        yPercent: 0,
+        autoAlpha: 1,
+        duration: 0.55,
+        ease: ease.out,
+        overwrite: "auto",
+      });
+    };
+    window.addEventListener(SCROLL_SETTLED, onSettled);
+    return () => window.removeEventListener(SCROLL_SETTLED, onSettled);
   }, []);
 
   useGsap((mm) => {
@@ -54,22 +129,21 @@ export default function Nav({ ready, overlayOpen }: Props) {
       gsap.set(".nav-mark span", { yPercent: 130 });
       const tl = gsap
         .timeline()
-        .to(root.current, { yPercent: 0, autoAlpha: 1, duration: 1, ease: ease.out })
+        .set(root.current, { autoAlpha: 1 })
+        .to(root.current, { yPercent: 0, autoAlpha: 1, duration: 1, ease: ease.out, onStart: () => (away.current = false) })
         .to(".nav-mark span", { yPercent: 0, duration: 0.9, ease: ease.out }, 0.1)
         .to(".nav-link", { yPercent: 0, duration: 0.85, stagger: 0.06, ease: ease.out }, 0.2);
       return () => tl.kill();
     });
   }, [ready]);
 
-  // The overlay outranks the menu: deriving keeps a stale `open` from leaving
-  // the page scroll-locked after the overlay hands it back.
-  const shown = open && !overlayOpen;
 
+  const shown = open;
 
   useEffect(() => {
     if (!shown) return;
     lockScroll(true);
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpenAt(null);
     window.addEventListener("keydown", onKey);
     return () => {
       window.removeEventListener("keydown", onKey);
@@ -136,7 +210,7 @@ export default function Nav({ ready, overlayOpen }: Props) {
 
             <button
               type="button"
-              onClick={() => setOpen((v) => !v)}
+              onClick={() => setOpenAt(shown ? null : pathname)}
               className="flex h-10 w-10 items-center justify-center lg:hidden"
               aria-expanded={shown}
               aria-label={shown ? "Close menu" : "Open menu"}
@@ -164,7 +238,7 @@ export default function Nav({ ready, overlayOpen }: Props) {
                 <li key={link.href} className="menu-item overflow-hidden border-b border-bone/12">
                   <a
                     href={link.href}
-                    onClick={() => setOpen(false)}
+                    onClick={() => setOpenAt(null)}
                     className="flex items-baseline gap-4 py-4"
                     data-cursor="Link"
                   >
