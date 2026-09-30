@@ -333,6 +333,51 @@
     backface-visibility: hidden;
   }
 
+  /* ── Dither gradient ───────────────────────────────────────────── */
+  /* One cycle per blob. The variables are set per blob inline, so every
+     field drifts on its own period and the set never visibly repeats. */
+  @keyframes dg-drift {
+    0% {
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    }
+    50% {
+      transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--rot)) scale(var(--s1));
+    }
+    100% {
+      transform: translate3d(calc(var(--dx) * -0.6), calc(var(--dy) * -0.8), 0)
+        rotate(calc(var(--rot) * -1)) scale(var(--s2));
+    }
+  }
+
+  /* Bands travel along their own length. No rotation here: the paths are drawn
+     on a stretched box, so a rotate would read as a shear. */
+  @keyframes dg-swell {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+      transform: translate3d(var(--dx), var(--dy), 0) scale(var(--s1));
+    }
+    100% {
+      transform: translate3d(calc(var(--dx) * -0.6), calc(var(--dy) * -0.9), 0) scale(var(--s2));
+    }
+  }
+
+  /* The whole field leaning under the bands. Paired with dg-swell on a very
+     different period, so the composition never settles into a loop the eye
+     can lock onto. */
+  @keyframes dg-field {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+      transform: translate3d(-2.5%, 1.5%, 0) scale(1.07);
+    }
+    100% {
+      transform: translate3d(2%, -1.5%, 0) scale(1.03);
+    }
+  }
+
   /* ── Scrollbar ─────────────────────────────────────────────────── */
   ::-webkit-scrollbar {
     width: 9px;
