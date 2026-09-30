@@ -19,6 +19,7 @@
   --text-display: clamp(4rem, 17vw, 19rem);
   --text-hero: clamp(2.75rem, 9.5vw, 11rem);
   --text-title: clamp(2.1rem, 5.6vw, 5.75rem);
+  --text-quote: clamp(1.5rem, 3.3vw, 2.95rem);
   --text-lead: clamp(1.15rem, 1.85vw, 1.7rem);
   --text-body: clamp(0.95rem, 1.02vw, 1.0625rem);
   --text-meta: 0.6875rem;
