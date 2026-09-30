@@ -10,6 +10,7 @@ import RouteTransition from "./components/RouteTransition";
 import Home from "./pages/Home";
 import ProjectPage from "./pages/ProjectPage";
 import { usePrefersReducedMotion } from "./lib/motion";
+import { useAnchorScroll } from "./lib/anchorScroll";
 import { useScrollMemory } from "./lib/scrollMemory";
 
 type Stage = "loading" | "revealing" | "live";
@@ -25,6 +26,7 @@ export default function App() {
   // its own close control, so the header does not hover over the work at all.
   const onProject = pathname.startsWith("/work/");
   useScrollMemory();
+  useAnchorScroll();
 
   // The smoother wraps the routes rather than living inside one of them, so
   // scrolling survives a page change instead of being torn down and rebuilt.
