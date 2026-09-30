@@ -2,6 +2,7 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { ease, motion, useGsap } from "../lib/motion";
 import { process } from "../data/studio";
+import DitherGradient from "./DitherGradient";
 
 export default function Process() {
   const root = useRef<HTMLElement>(null);
@@ -11,51 +12,26 @@ export default function Process() {
       const el = root.current;
       if (!el) return;
 
-      const spine = gsap.fromTo(
-        ".process-spine span",
-        { scaleY: 0 },
-        {
-          scaleY: 1,
-          ease: "none",
-          transformOrigin: "top center",
-          scrollTrigger: {
-            trigger: ".process-list",
-            start: "top 68%",
-            end: "bottom 78%",
-            scrub: 0.6,
-          },
-        },
-      );
-
-      const rows = gsap.utils.toArray<HTMLElement>(".process-row", el).map((row) => {
-        const tween = gsap.timeline({
-          scrollTrigger: { trigger: row, start: "top 86%" },
-        });
-        tween
-          .from(row.querySelectorAll("[data-part]"), {
+      const rows = gsap.utils.toArray<HTMLElement>(".process-row", el).map((row) =>
+        gsap.timeline({ scrollTrigger: { trigger: row, start: "top 86%" } }).from(
+          row.querySelectorAll("[data-part]"),
+          {
             y: 50,
             autoAlpha: 0,
             duration: 1,
             stagger: 0.08,
             ease: ease.out,
-          })
-          .fromTo(
-            row.querySelector(".process-row-line")!,
-            { scaleX: 0 },
-            { scaleX: 1, duration: 1.2, ease: ease.out },
-            0,
-          );
-        return tween;
-      });
+          },
+        ),
+      );
 
       return () => {
-        spine.scrollTrigger?.kill();
-        spine.kill();
         rows.forEach((t) => {
           t.scrollTrigger?.kill();
           t.kill();
         });
       };
+
     });
   }, []);
 
@@ -81,31 +57,39 @@ export default function Process() {
           </p>
         </div>
 
-        <ol className="process-list relative grid gap-10 lg:grid-cols-4 lg:gap-8">
-          <div className="process-spine absolute top-0 bottom-0 left-0 hidden w-px bg-bone/12 lg:block">
-            <span className="block h-full w-full bg-bone/55" />
-          </div>
-
-          {process.map((step) => (
+        {/* Feature rows: half text, half card, swapping sides each time. The
+            `order` pair does the alternation rather than duplicating markup,
+            so the row stays one column on small screens and only splits once
+            there is room for two equal halves. */}
+        <ol className="process-list relative flex flex-col gap-16 lg:gap-28">
+          {process.map((step, i) => (
             <li
               key={step.index}
-              className="process-row relative grid gap-4 pt-7 lg:pl-9"
+              className="process-row grid grid-cols-1 items-center gap-6 lg:grid-cols-2 lg:gap-16"
             >
-              <span className="process-row-line absolute top-0 left-0 block h-px w-full origin-left bg-bone/20" />
-              <div className="flex items-baseline justify-between gap-4">
-                <span className="mono text-bone/45" data-part>
-                  {step.index}
-                </span>
-                <span className="mono text-bone/45" data-part>
-                  {step.duration}
-                </span>
+              <div className={i % 2 ? "lg:order-2" : undefined}>
+                <div className="flex items-baseline justify-between gap-4" data-part>
+                  <span className="mono text-bone/45">{step.index}</span>
+                  <span className="mono text-bone/45">{step.duration}</span>
+                </div>
+                <h3
+                  className="display mt-4 text-[clamp(2rem,4vw,3.4rem)]"
+                  data-part
+                >
+                  {step.title}
+                </h3>
+                <p
+                  className="mt-5 max-w-[46ch] text-[1.02rem] leading-[1.75] text-bone/65"
+                  data-part
+                >
+                  {step.body}
+                </p>
               </div>
-              <h3 className="display text-[clamp(1.75rem,3vw,2.6rem)]" data-part>
-                {step.title}
-              </h3>
-              <p className="max-w-[38ch] text-[0.98rem] leading-[1.7] text-bone/65" data-part>
-                {step.body}
-              </p>
+
+              <DitherGradient
+                className={`aspect-square w-full rounded-[30px] ${i % 2 ? "lg:order-1" : ""}`}
+                phase={i * 6.5}
+              />
             </li>
           ))}
         </ol>
