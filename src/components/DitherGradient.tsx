@@ -117,6 +117,13 @@ export type DitherGradientProps = {
   blur?: number;
   /** Base scale of the whole field. */
   scale?: number;
+  /**
+   * Where the field opens, as a percentage of the card. The bands are drawn
+   * wider than the card, so there is slack to spend here: enough that two
+   * instances never open on the same composition, and the scale is widened to
+   * match so none of the shift walks the artwork off its own edge.
+   */
+  offset?: { x: number; y: number };
   /** Seconds of drift to start already in, so two cards never march in step. */
   phase?: number;
   className?: string;
@@ -153,6 +160,7 @@ export default function DitherGradient({
   grain = 0.55,
   blur = 0.05,
   scale = 1,
+  offset = { x: 0, y: 0 },
   phase = 0,
   className = "",
 }: DitherGradientProps) {
@@ -209,6 +217,11 @@ export default function DitherGradient({
 
   const blurPx = Math.round(short * blur);
   const chew = Math.max(1.2, short * 0.02);
+
+  // A card that opens off-centre is scaled to match, or the shift would walk
+  // the artwork off its own edge. Whole percent, so the transform below is a
+  // clean number rather than float noise.
+  const bleed = Math.round(Math.max(Math.abs(offset.x), Math.abs(offset.y))) / 100;
 
   // Threshold depth: how far the stipple bites toward punching through to the
   // cream base. Past roughly a third the card washes out and the colour is
@@ -318,7 +331,12 @@ export default function DitherGradient({
             preserveAspectRatio="none"
             className="absolute inset-0 size-full"
             aria-hidden="true"
-            style={{ transform: `scale(${scale})` }}
+            // Where this field opens. Applied here, on the artwork rather than
+            // the field around it, so the long lean underneath keeps its own
+            // rhythm and only the bands start from a different place.
+            style={{
+              transform: `translate(${offset.x}%, ${offset.y}%) scale(${scale + bleed})`,
+            }}
           >
             {RIBBONS.map((r, i) => (
               <path

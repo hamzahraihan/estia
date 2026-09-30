@@ -4,6 +4,19 @@ import { ease, motion, useGsap } from "../lib/motion";
 import { process } from "../data/studio";
 import DitherGradient from "./DitherGradient";
 
+/**
+ * Where each stage's field opens. The bands are drawn wider than their card, so
+ * there is a few percent of slack to spend on this — and it is what keeps four
+ * cards of the same artwork from reading as four copies of one card. `phase`
+ * staggers when each one starts moving; this staggers where each one starts.
+ */
+const POSES = [
+  { x: 0, y: 0 },
+  { x: 11, y: -8 },
+  { x: -12, y: 7 },
+  { x: 8, y: 12 },
+];
+
 export default function Process() {
   const root = useRef<HTMLElement>(null);
 
@@ -89,6 +102,7 @@ export default function Process() {
               <DitherGradient
                 className={`aspect-square w-full rounded-[30px] ${i % 2 ? "lg:order-1" : ""}`}
                 phase={i * 6.5}
+                offset={POSES[i]}
               />
             </li>
           ))}
