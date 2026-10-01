@@ -1,10 +1,29 @@
 import { useRef } from "react";
 import gsap from "gsap";
 import { motion, useGsap } from "../lib/motion";
-import wire from "../assets/stage-listen-wireframe.webp";
-import stripple from "../assets/stage-listen-stripple.webp";
+import listenWire from "../assets/stage-listen-wireframe.webp";
+import listenStripple from "../assets/stage-listen-stripple.webp";
+import drawWire from "../assets/stage-draw-wireframe.webp";
+import drawStripple from "../assets/stage-draw-stripple.webp";
+
+/** The four stages, in the order the process runs. */
+export type Stage = "listen" | "draw" | "source" | "build";
+
+/**
+ * Which drawing belongs to which stage. Every stage gets its own pair of files
+ * once they exist; the two that have not landed yet borrow the Listen pair so
+ * the section keeps four cards of the same size, and each is one line to change
+ * the day its artwork arrives.
+ */
+const ARTWORK: Record<Stage, { wire: string; stripple: string }> = {
+  listen: { wire: listenWire, stripple: listenStripple },
+  draw: { wire: drawWire, stripple: drawStripple },
+  source: { wire: listenWire, stripple: listenStripple },
+  build: { wire: listenWire, stripple: listenStripple },
+};
 
 export type StageDrawingProps = {
+  stage: Stage;
   className?: string;
 };
 
@@ -42,8 +61,9 @@ const PIN = 0.7;
  * Decorative: the stage copy beside the card says all of this, so neither layer
  * carries alt text of its own.
  */
-export default function StageDrawing({ className = "" }: StageDrawingProps) {
+export default function StageDrawing({ stage, className = "" }: StageDrawingProps) {
   const root = useRef<HTMLDivElement>(null);
+  const { wire, stripple } = ARTWORK[stage];
 
   useGsap((mm) => {
     mm.add(motion.full, () => {
