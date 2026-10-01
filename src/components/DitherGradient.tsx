@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { useLiveField } from "../lib/motion";
 
 export type DitherColors = {
   /** Long ribbons and pools. */
@@ -170,37 +171,11 @@ export default function DitherGradient({
 
   // Still water when the visitor asked for still water, and no reason to
   // animate a card nobody is looking at, or one in a tab they walked away from.
-  const [live, setLive] = useState(false);
-  const [onScreen, setOnScreen] = useState(false);
-  const [tabOpen, setTabOpen] = useState(true);
-  const active = live && onScreen && tabOpen;
+  const active = useLiveField(host);
+
 
   const ramp = { ...DEFAULTS, ...colors };
   const filterId = `dg-${uid}`;
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setLive(!mq.matches);
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, []);
-
-  useEffect(() => {
-    const el = host.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([entry]) => setOnScreen(entry.isIntersecting), {
-      rootMargin: "80px",
-    });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const sync = () => setTabOpen(!document.hidden);
-    document.addEventListener("visibilitychange", sync);
-    return () => document.removeEventListener("visibilitychange", sync);
-  }, []);
 
   // Blur and the chew distance are both fractions of the card, so the effect
   // reads the same in a thumbnail and in a full-width panel.
