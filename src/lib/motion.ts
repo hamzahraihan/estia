@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, type DependencyList } from "react";
+import { useEffect, useLayoutEffect, useState, type DependencyList, type RefObject } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollSmoother } from "gsap/ScrollSmoother";
@@ -51,6 +51,54 @@ export function usePrefersReducedMotion(): boolean {
   }, []);
 
   return reduced;
+}
+
+/**
+ * Whether an ambient animation is allowed to run right now.
+ *
+ * Three gates, and every one of them is about not spending frames the visitor
+ * cannot see: motion was not welcome, the element is scrolled out of view, or
+ * the tab is closed. Anything decorative and always-on reads its animation from
+ * here rather than keeping its own copy of the three checks — they only ever
+ * need to be right in one place, and one field drifting against the others is
+ * worse than a card that costs nothing.
+ */
+export function useLiveField(host: RefObject<HTMLElement | null>): boolean {
+  // Read at mount rather than after the first paint: a tab opened with reduced
+  // motion already set, or restored from the background, must not get a frame
+  // of animation before the listener that stops it has even been attached.
+  const reduce = "(prefers-reduced-motion: reduce)";
+  const [live, setLive] = useState(() => !window.matchMedia(reduce).matches);
+  const [onScreen, setOnScreen] = useState(false);
+  const [tabOpen, setTabOpen] = useState(() => !document.hidden);
+
+  useEffect(() => {
+    const mq = window.matchMedia(reduce);
+    const onChange = (e: MediaQueryListEvent) => setLive(!e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const el = host.current;
+    if (!el) return;
+    // The margin leads in rather than out: a field that starts a moment before
+    // it scrolls into view is already running by the time it arrives, so the
+    // card never reveals itself part-way into its own cycle.
+    const io = new IntersectionObserver(([entry]) => setOnScreen(entry.isIntersecting), {
+      rootMargin: "80px",
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [host]);
+
+  useEffect(() => {
+    const onVisibility = () => setTabOpen(!document.hidden);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
+  return live && onScreen && tabOpen;
 }
 
 /**
