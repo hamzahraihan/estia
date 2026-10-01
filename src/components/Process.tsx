@@ -2,7 +2,10 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { ease, motion, useGsap } from "../lib/motion";
 import { process } from "../data/studio";
-import StageDrawing from "./StageDrawing";
+import StageDrawing, { type Stage } from "./StageDrawing";
+
+/** Which drawing each stage shows. Same order as `process`. */
+const STAGES: Stage[] = ["listen", "draw", "source", "build"];
 
 export default function Process() {
   const root = useRef<HTMLElement>(null);
@@ -87,6 +90,7 @@ export default function Process() {
               </div>
 
               <StageDrawing
+                stage={STAGES[i]}
                 className={`aspect-square w-full rounded-[30px] ${i % 2 ? "lg:order-1" : ""}`}
               />
             </li>
