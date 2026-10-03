@@ -18,8 +18,11 @@ export default function Process() {
       const rows = gsap.utils.toArray<HTMLElement>(".process-row", el).map((row) =>
         gsap.timeline({ scrollTrigger: { trigger: row, start: "top 86%" } }).from(
           row.querySelectorAll("[data-part]"),
+          // Travel stays inside the 24px mobile row gap (gap-6): anything more
+          // starts the copy sitting on the card below it. Two columns on
+          // desktop, so the smaller rise changes nothing there.
           {
-            y: 50,
+            y: 24,
             autoAlpha: 0,
             duration: 1,
             stagger: 0.08,
