@@ -5,21 +5,24 @@ import listenWire from "../assets/stage-listen-wireframe.webp";
 import listenStripple from "../assets/stage-listen-stripple.webp";
 import drawWire from "../assets/stage-draw-wireframe.webp";
 import drawStripple from "../assets/stage-draw-stripple.webp";
+import sourceWire from "../assets/stage-source-wireframe.webp";
+import sourceStripple from "../assets/stage-source-stripple.webp";
+import buildWire from "../assets/stage-build-wireframe.webp";
+import buildStripple from "../assets/stage-build-stripple.webp";
 
 /** The four stages, in the order the process runs. */
 export type Stage = "listen" | "draw" | "source" | "build";
 
 /**
- * Which drawing belongs to which stage. Every stage gets its own pair of files
- * once they exist; the two that have not landed yet borrow the Listen pair so
- * the section keeps four cards of the same size, and each is one line to change
- * the day its artwork arrives.
+ * Which drawing belongs to which stage, in process order. The Build pair is
+ * cropped square from a taller sheet — the card it lands in is square, so a
+ * full-bleed portrait would lose its top and bottom to the card's own crop.
  */
 const ARTWORK: Record<Stage, { wire: string; stripple: string }> = {
   listen: { wire: listenWire, stripple: listenStripple },
   draw: { wire: drawWire, stripple: drawStripple },
-  source: { wire: listenWire, stripple: listenStripple },
-  build: { wire: listenWire, stripple: listenStripple },
+  source: { wire: sourceWire, stripple: sourceStripple },
+  build: { wire: buildWire, stripple: buildStripple },
 };
 
 export type StageDrawingProps = {
@@ -115,7 +118,7 @@ export default function StageDrawing({ stage, className = "" }: StageDrawingProp
         <img
           src={wire}
           alt=""
-          className="stage-wire block w-full"
+          className="stage-wire block w-full h-full"
           style={{ clipPath: "inset(100% 0% 0% 0%)" }}
         />
         <img
