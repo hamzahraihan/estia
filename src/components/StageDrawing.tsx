@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import listenWire from "../assets/stage-listen-wireframe.webp";
 import listenStripple from "../assets/stage-listen-stripple.webp";
 import drawWire from "../assets/stage-draw-wireframe.webp";
@@ -56,12 +55,10 @@ export type StageDrawingProps = {
  * carries alt text of its own.
  */
 export default function StageDrawing({ stage, className = "" }: StageDrawingProps) {
-  const root = useRef<HTMLDivElement>(null);
   const { wire, stripple } = ARTWORK[stage];
 
   return (
     <div
-      ref={root}
       className={`relative isolate overflow-hidden border border-bone-2 bg-linen ${className}`}
     >
       {/* One box, full-bleed over the square card, with the stipple lying over

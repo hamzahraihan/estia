@@ -24,7 +24,7 @@ export default function Process() {
       const el = root.current;
       if (!el) return;
 
-      const rows = gsap.utils.toArray<HTMLElement>(".process-row", el).map((row) => {
+      const pairs = gsap.utils.toArray<HTMLElement>(".process-row", el).map((row) => {
         const card = row.querySelector<HTMLElement>("div.relative.isolate");
         const tl = gsap.timeline({
           scrollTrigger: {
@@ -48,12 +48,9 @@ export default function Process() {
           { clipPath: "inset(100% 0% 0% 0%)", ease: "none" },
           0,
         );
-        return tl;
-      });
-      // Keep the existing [data-part] entrance as a separate non-scrubbed
-      // trigger per row ("top 86%"), unchanged.
-      const entrances = gsap.utils.toArray<HTMLElement>(".process-row", el).map((row) =>
-        gsap.timeline({ scrollTrigger: { trigger: row, start: "top 86%" } }).from(
+        // Keep the existing [data-part] entrance as a separate non-scrubbed
+        // trigger per row ("top 86%"), unchanged.
+        const entrance = gsap.timeline({ scrollTrigger: { trigger: row, start: "top 86%" } }).from(
           row.querySelectorAll("[data-part]"),
           // Travel stays inside the 24px mobile row gap (gap-6): anything more
           // starts the copy sitting on the card below it. Two columns on
@@ -65,17 +62,16 @@ export default function Process() {
             stagger: 0.08,
             ease: ease.out,
           },
-        ),
-      );
+        );
+        return { pin: tl, entrance };
+      });
 
       return () => {
-        rows.forEach((t) => {
-          t.scrollTrigger?.kill();
-          t.kill();
-        });
-        entrances.forEach((t) => {
-          t.scrollTrigger?.kill();
-          t.kill();
+        pairs.forEach(({ pin, entrance }) => {
+          pin.scrollTrigger?.kill();
+          pin.kill();
+          entrance.scrollTrigger?.kill();
+          entrance.kill();
         });
       };
     });
