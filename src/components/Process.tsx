@@ -15,34 +15,8 @@ export default function Process() {
       const el = root.current;
       if (!el) return;
 
-      const pairs = gsap.utils.toArray<HTMLElement>(".process-row", el).map((row) => {
-        const card = row.querySelector<HTMLElement>("div.relative.isolate");
-        // No pin: the edge travels while the row crosses the viewport under
-        // its own scroll. The 70-point span ("top 85%" to "top 15%") keeps the
-        // old 0.7-screen travel pace with nothing ever frozen in place.
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: row,
-            start: "top 85%",
-            end: "top 15%",
-            scrub: 0.4,
-            invalidateOnRefresh: true,
-          },
-        });
-        tl.fromTo(
-          card?.querySelector<HTMLElement>(".stage-settled") ?? null,
-          { clipPath: "inset(0% 0% 100% 0%)" },
-          { clipPath: "inset(0% 0% 0% 0%)", ease: "none" },
-          0,
-        ).fromTo(
-          card?.querySelector<HTMLElement>(".stage-wire") ?? null,
-          { clipPath: "inset(0% 0% 0% 0%)" },
-          { clipPath: "inset(100% 0% 0% 0%)", ease: "none" },
-          0,
-        );
-        // Keep the existing [data-part] entrance as a separate non-scrubbed
-        // trigger per row ("top 86%"), unchanged.
-        const entrance = gsap.timeline({ scrollTrigger: { trigger: row, start: "top 86%" } }).from(
+      const rows = gsap.utils.toArray<HTMLElement>(".process-row", el).map((row) =>
+        gsap.timeline({ scrollTrigger: { trigger: row, start: "top 86%" } }).from(
           row.querySelectorAll("[data-part]"),
           // Travel stays inside the 24px mobile row gap (gap-6): anything more
           // starts the copy sitting on the card below it. Two columns on
@@ -54,18 +28,16 @@ export default function Process() {
             stagger: 0.08,
             ease: ease.out,
           },
-        );
-        return { pin: tl, entrance };
-      });
+        ),
+      );
 
       return () => {
-        pairs.forEach(({ pin, entrance }) => {
-          pin.scrollTrigger?.kill();
-          pin.kill();
-          entrance.scrollTrigger?.kill();
-          entrance.kill();
+        rows.forEach((t) => {
+          t.scrollTrigger?.kill();
+          t.kill();
         });
       };
+
     });
   }, []);
 
