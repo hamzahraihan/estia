@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { Route, Routes, useLocation } from "react-router";
 import Preloader from "./components/Preloader";
 import SmoothScroll from "./components/SmoothScroll";
@@ -8,10 +8,11 @@ import ScrollProgress from "./components/ScrollProgress";
 import Nav from "./components/Nav";
 import RouteTransition from "./components/RouteTransition";
 import Home from "./pages/Home";
-import ProjectPage from "./pages/ProjectPage";
 import { usePrefersReducedMotion } from "./lib/motion";
 import { useAnchorScroll } from "./lib/anchorScroll";
 import { useScrollMemory } from "./lib/scrollMemory";
+
+const ProjectPage = lazy(() => import("./pages/ProjectPage"));
 
 type Stage = "loading" | "revealing" | "live";
 
@@ -35,7 +36,14 @@ export default function App() {
       <SmoothScroll paused={loading}>
         <Routes>
           <Route path="/" element={<Home play={!loading} />} />
-          <Route path="/work/:slug" element={<ProjectPage />} />
+          <Route
+            path="/work/:slug"
+            element={
+              <Suspense fallback={null}>
+                <ProjectPage />
+              </Suspense>
+            }
+          />
         </Routes>
       </SmoothScroll>
 
