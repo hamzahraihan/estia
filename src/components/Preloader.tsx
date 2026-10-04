@@ -91,9 +91,9 @@ export default function Preloader({ onReveal, onDone }: Props) {
       cleanup = build(); // start the count NOW, don't wait for fonts
       // Re-measure SplitText layouts once the display face arrives —
       // the curtain no longer waits for it.
-      document.fonts?.ready.catch(() => undefined).then(() => {
+      (document.fonts?.ready?.catch(() => undefined)?.then(() => {
         if (!cancelled) ScrollTrigger.refresh();
-      });
+      }) ?? Promise.resolve());
       return () => { cancelled = true; cleanup?.(); };
     });
 
