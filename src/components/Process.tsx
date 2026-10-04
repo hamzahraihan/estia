@@ -29,7 +29,7 @@ export default function Process() {
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: row,
-            start: "center center",
+            start: "top center+=36", // half the 72px fixed header: card top clears the nav
             end: () => `+=${Math.round(window.innerHeight * PIN)}`,
             pin: true,
             anticipatePin: 1,

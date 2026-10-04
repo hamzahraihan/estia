@@ -64,16 +64,17 @@ export default function StageDrawing({ stage, className = "" }: StageDrawingProp
       ref={root}
       className={`relative isolate overflow-hidden border border-bone-2 bg-linen ${className}`}
     >
-      {/* One box, sized by the survey, with the stipple lying over it in exactly
-          the same one — nothing here has to stay in step with the file's own
-          proportions. */}
-      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2">
+      {/* One box, full-bleed over the square card, with the stipple lying over
+          the survey in exactly the same one — object-cover crops every
+          non-square sheet identically at render time, so the clip edge
+          travels across two identically-sized layers. */}
+      <div className="absolute inset-0">
         <img
           src={wire}
           alt=""
           loading="lazy"
           decoding="async"
-          className="stage-wire block w-full h-full"
+          className="stage-wire absolute inset-0 size-full object-cover"
           style={{ clipPath: "inset(100% 0% 0% 0%)" }}
         />
         <img
@@ -81,7 +82,7 @@ export default function StageDrawing({ stage, className = "" }: StageDrawingProp
           alt=""
           loading="lazy"
           decoding="async"
-          className="stage-settled absolute inset-0 size-full object-contain"
+          className="stage-settled absolute inset-0 size-full object-cover"
         />
       </div>
     </div>
