@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ease, motion, useGsap } from "../lib/motion";
 import { studio } from "../data/studio";
 
@@ -87,20 +88,13 @@ export default function Preloader({ onReveal, onDone }: Props) {
     mm.add(motion.full, () => {
       let cleanup: (() => void) | undefined;
       let cancelled = false;
-
-      // Split text elsewhere measures against the final metrics, so the curtain
-      // waits for the display face — but a blocked or slow webfont request must
-      // not strand the visitor on a black screen, so it also has a deadline.
-      const faces = document.fonts?.ready ?? Promise.resolve();
-      const deadline = new Promise<void>((resolve) => window.setTimeout(resolve, 1200));
-      Promise.race([faces.catch(() => undefined), deadline]).then(() => {
-        if (!cancelled) cleanup = build();
+      cleanup = build(); // start the count NOW, don't wait for fonts
+      // Re-measure SplitText layouts once the display face arrives —
+      // the curtain no longer waits for it.
+      document.fonts?.ready.catch(() => undefined).then(() => {
+        if (!cancelled) ScrollTrigger.refresh();
       });
-
-      return () => {
-        cancelled = true;
-        cleanup?.();
-      };
+      return () => { cancelled = true; cleanup?.(); };
     });
 
     mm.add(motion.reduce, () => {
