@@ -7,6 +7,15 @@ import StageDrawing, { type Stage } from "./StageDrawing";
 /** Which drawing each stage shows. Same order as `process`. */
 const STAGES: Stage[] = ["listen", "draw", "source", "build"];
 
+/**
+ * How far a row travels while it is pinned, in screens. Long enough that the
+ * edge crosses the drawing at a pace you can read the drawing arriving, short
+ * enough that four pinned rows do not turn the section into a corridor.
+ * (Moved from StageDrawing: the row owns the pin now, so the constant lives
+ * with the trigger that consumes it.)
+ */
+const PIN = 0.7;
+
 export default function Process() {
   const root = useRef<HTMLElement>(null);
 
@@ -15,7 +24,35 @@ export default function Process() {
       const el = root.current;
       if (!el) return;
 
-      const rows = gsap.utils.toArray<HTMLElement>(".process-row", el).map((row) =>
+      const rows = gsap.utils.toArray<HTMLElement>(".process-row", el).map((row) => {
+        const card = row.querySelector<HTMLElement>("div.relative.isolate");
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: row,
+            start: "center center",
+            end: () => `+=${Math.round(window.innerHeight * PIN)}`,
+            pin: true,
+            anticipatePin: 1,
+            scrub: 0.4,
+            invalidateOnRefresh: true,
+          },
+        });
+        tl.fromTo(
+          card?.querySelector<HTMLElement>(".stage-settled") ?? null,
+          { clipPath: "inset(0% 0% 100% 0%)" },
+          { clipPath: "inset(0% 0% 0% 0%)", ease: "none" },
+          0,
+        ).fromTo(
+          card?.querySelector<HTMLElement>(".stage-wire") ?? null,
+          { clipPath: "inset(0% 0% 0% 0%)" },
+          { clipPath: "inset(100% 0% 0% 0%)", ease: "none" },
+          0,
+        );
+        return tl;
+      });
+      // Keep the existing [data-part] entrance as a separate non-scrubbed
+      // trigger per row ("top 86%"), unchanged.
+      const entrances = gsap.utils.toArray<HTMLElement>(".process-row", el).map((row) =>
         gsap.timeline({ scrollTrigger: { trigger: row, start: "top 86%" } }).from(
           row.querySelectorAll("[data-part]"),
           // Travel stays inside the 24px mobile row gap (gap-6): anything more
@@ -36,8 +73,11 @@ export default function Process() {
           t.scrollTrigger?.kill();
           t.kill();
         });
+        entrances.forEach((t) => {
+          t.scrollTrigger?.kill();
+          t.kill();
+        });
       };
-
     });
   }, []);
 

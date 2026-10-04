@@ -1,6 +1,4 @@
 import { useRef } from "react";
-import gsap from "gsap";
-import { motion, useGsap } from "../lib/motion";
 import listenWire from "../assets/stage-listen-wireframe.webp";
 import listenStripple from "../assets/stage-listen-stripple.webp";
 import drawWire from "../assets/stage-draw-wireframe.webp";
@@ -31,18 +29,11 @@ export type StageDrawingProps = {
 };
 
 /**
- * How far the card travels while it is pinned, in screens. Long enough that
- * the edge crosses the drawing at a pace you can read the drawing arriving,
- * short enough that four pinned cards do not turn the section into a corridor.
- */
-const PIN = 0.7;
-
-/**
  * The stage artwork: one axonometric of the flat in two states. A card opens
- * on the wireframe — everything surveyed, nothing decided — pins itself, and
- * hands the drawing over to the stipple behind a single straight edge that
+ * on the wireframe — everything surveyed, nothing decided — and while its row
+ * is pinned, hands the drawing over to the stipple behind a single straight edge that
  * travels down the card as the visitor scrolls. At the bottom of the pin the
- * edge is off the sheet, the card lets go, and the page carries on. Scroll back
+ * edge is off the sheet, the row lets go, and the page carries on. Scroll back
  * up and the edge comes back with it.
  *
  * The edge is one line doing two jobs. The stipple is clipped to below it and
@@ -67,44 +58,6 @@ const PIN = 0.7;
 export default function StageDrawing({ stage, className = "" }: StageDrawingProps) {
   const root = useRef<HTMLDivElement>(null);
   const { wire, stripple } = ARTWORK[stage];
-
-  useGsap((mm) => {
-    mm.add(motion.full, () => {
-      const el = root.current;
-      if (!el) return;
-
-      const timeline = gsap.timeline({
-        scrollTrigger: {
-          trigger: el,
-          start: "center center",
-          end: () => `+=${Math.round(window.innerHeight * PIN)}`,
-          pin: true,
-          anticipatePin: 1,
-          scrub: 0.4,
-          invalidateOnRefresh: true,
-        },
-      });
-
-      timeline
-        .fromTo(
-          el.querySelector<HTMLElement>(".stage-settled"),
-          { clipPath: "inset(0% 0% 100% 0%)" },
-          { clipPath: "inset(0% 0% 0% 0%)", ease: "none" },
-          0,
-        )
-        .fromTo(
-          el.querySelector<HTMLElement>(".stage-wire"),
-          { clipPath: "inset(0% 0% 0% 0%)" },
-          { clipPath: "inset(100% 0% 0% 0%)", ease: "none" },
-          0,
-        );
-
-      return () => {
-        timeline.scrollTrigger?.kill();
-        timeline.kill();
-      };
-    });
-  }, []);
 
   return (
     <div
