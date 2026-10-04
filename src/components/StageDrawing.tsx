@@ -1,3 +1,6 @@
+import { useRef } from "react";
+import gsap from "gsap";
+import { motion, useGsap } from "../lib/motion";
 import listenWire from "../assets/stage-listen-wireframe.webp";
 import listenStripple from "../assets/stage-listen-stripple.webp";
 import drawWire from "../assets/stage-draw-wireframe.webp";
@@ -28,12 +31,19 @@ export type StageDrawingProps = {
 };
 
 /**
+ * How far the card travels while it is pinned, in screens. Long enough that
+ * the edge crosses the drawing at a pace you can read the drawing arriving,
+ * short enough that four pinned cards do not turn the section into a corridor.
+ */
+const PIN = 0.7;
+
+/**
  * The stage artwork: one axonometric of the flat in two states. A card opens
- * on the wireframe — everything surveyed, nothing decided — and as its row
- * travels through the viewport, hands the drawing over to the stipple behind
- * a single straight edge that moves down the card with the scroll. By the
- * time the row has crossed, the edge is off the sheet and the page carries
- * on. Scroll back up and the edge comes back with it.
+ * on the wireframe — everything surveyed, nothing decided — pins itself, and
+ * hands the drawing over to the stipple behind a single straight edge that
+ * travels down the card as the visitor scrolls. At the bottom of the pin the
+ * edge is off the sheet, the card lets go, and the page carries on. Scroll back
+ * up and the edge comes back with it.
  *
  * The edge is one line doing two jobs. The stipple is clipped to below it and
  * the survey to above it, so the finished drawing is never laid over the
@@ -55,23 +65,62 @@ export type StageDrawingProps = {
  * carries alt text of its own.
  */
 export default function StageDrawing({ stage, className = "" }: StageDrawingProps) {
+  const root = useRef<HTMLDivElement>(null);
   const { wire, stripple } = ARTWORK[stage];
+
+  useGsap((mm) => {
+    mm.add(motion.full, () => {
+      const el = root.current;
+      if (!el) return;
+
+      const timeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: el,
+          start: "center center",
+          end: () => `+=${Math.round(window.innerHeight * PIN)}`,
+          pin: true,
+          anticipatePin: 1,
+          scrub: 0.4,
+          invalidateOnRefresh: true,
+        },
+      });
+
+      timeline
+        .fromTo(
+          el.querySelector<HTMLElement>(".stage-settled"),
+          { clipPath: "inset(0% 0% 100% 0%)" },
+          { clipPath: "inset(0% 0% 0% 0%)", ease: "none" },
+          0,
+        )
+        .fromTo(
+          el.querySelector<HTMLElement>(".stage-wire"),
+          { clipPath: "inset(0% 0% 0% 0%)" },
+          { clipPath: "inset(100% 0% 0% 0%)", ease: "none" },
+          0,
+        );
+
+      return () => {
+        timeline.scrollTrigger?.kill();
+        timeline.kill();
+      };
+    });
+  }, []);
 
   return (
     <div
+      ref={root}
       className={`relative isolate overflow-hidden border border-bone-2 bg-linen ${className}`}
     >
-      {/* One box, full-bleed over the square card, with the stipple lying over
-          the survey in exactly the same one — object-cover crops every
-          non-square sheet identically at render time, so the clip edge
-          travels across two identically-sized layers. */}
-      <div className="absolute inset-0">
+      {/* One box, sized by the survey, with the stipple lying over it in exactly
+          the same one — nothing here has to stay in step with the file's own
+          proportions. */}
+      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2">
         <img
           src={wire}
           alt=""
           loading="lazy"
           decoding="async"
-          className="stage-wire absolute inset-0 size-full object-cover"
+          className="stage-wire block w-full h-full"
           style={{ clipPath: "inset(100% 0% 0% 0%)" }}
         />
         <img
@@ -79,7 +128,7 @@ export default function StageDrawing({ stage, className = "" }: StageDrawingProp
           alt=""
           loading="lazy"
           decoding="async"
-          className="stage-settled absolute inset-0 size-full object-cover"
+          className="stage-settled absolute inset-0 size-full object-contain"
         />
       </div>
     </div>
