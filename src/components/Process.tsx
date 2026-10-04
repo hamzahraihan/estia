@@ -7,15 +7,6 @@ import StageDrawing, { type Stage } from "./StageDrawing";
 /** Which drawing each stage shows. Same order as `process`. */
 const STAGES: Stage[] = ["listen", "draw", "source", "build"];
 
-/**
- * How far a row travels while it is pinned, in screens. Long enough that the
- * edge crosses the drawing at a pace you can read the drawing arriving, short
- * enough that four pinned rows do not turn the section into a corridor.
- * (Moved from StageDrawing: the row owns the pin now, so the constant lives
- * with the trigger that consumes it.)
- */
-const PIN = 0.7;
-
 export default function Process() {
   const root = useRef<HTMLElement>(null);
 
@@ -26,13 +17,14 @@ export default function Process() {
 
       const pairs = gsap.utils.toArray<HTMLElement>(".process-row", el).map((row) => {
         const card = row.querySelector<HTMLElement>("div.relative.isolate");
+        // No pin: the edge travels while the row crosses the viewport under
+        // its own scroll. The 70-point span ("top 85%" to "top 15%") keeps the
+        // old 0.7-screen travel pace with nothing ever frozen in place.
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: row,
-            start: "top center+=36", // half the 72px fixed header: card top clears the nav
-            end: () => `+=${Math.round(window.innerHeight * PIN)}`,
-            pin: true,
-            anticipatePin: 1,
+            start: "top 85%",
+            end: "top 15%",
             scrub: 0.4,
             invalidateOnRefresh: true,
           },

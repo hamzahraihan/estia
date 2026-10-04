@@ -29,11 +29,11 @@ export type StageDrawingProps = {
 
 /**
  * The stage artwork: one axonometric of the flat in two states. A card opens
- * on the wireframe — everything surveyed, nothing decided — and while its row
- * is pinned, hands the drawing over to the stipple behind a single straight edge that
- * travels down the card as the visitor scrolls. At the bottom of the pin the
- * edge is off the sheet, the row lets go, and the page carries on. Scroll back
- * up and the edge comes back with it.
+ * on the wireframe — everything surveyed, nothing decided — and as its row
+ * travels through the viewport, hands the drawing over to the stipple behind
+ * a single straight edge that moves down the card with the scroll. By the
+ * time the row has crossed, the edge is off the sheet and the page carries
+ * on. Scroll back up and the edge comes back with it.
  *
  * The edge is one line doing two jobs. The stipple is clipped to below it and
  * the survey to above it, so the finished drawing is never laid over the
