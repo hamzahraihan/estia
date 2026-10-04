@@ -118,12 +118,16 @@ export default function StageDrawing({ stage, className = "" }: StageDrawingProp
         <img
           src={wire}
           alt=""
+          loading="lazy"
+          decoding="async"
           className="stage-wire block w-full h-full"
           style={{ clipPath: "inset(100% 0% 0% 0%)" }}
         />
         <img
           src={stripple}
           alt=""
+          loading="lazy"
+          decoding="async"
           className="stage-settled absolute inset-0 size-full object-contain"
         />
       </div>
